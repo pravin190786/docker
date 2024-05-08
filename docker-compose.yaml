@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      INFLUXDB_DB: mon_test
+      INFLUXDB_ADMIN_USER: user
+      INFLUXDB_ADMIN_PASSWORD: password
+
+    volumes:
+      - influxdb_data:/var/lib/influxdb
+
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    volumes:
+      - ./telegraf:/etc/telegraf
+    depends_on:
+      - influxdb
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+    command: --config.file=/etc/prometheus/prometheus.yaml
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=password
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  influxdb_data:
+    driver: local
+  grafana_data:
+    driver: local
